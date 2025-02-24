@@ -1,11 +1,11 @@
 {
-  "name": "anki-server",
+  "name": "anki-mcp-server",
   "version": "0.1.0",
   "description": "A MCP Server That Manage Anki Card ",
   "private": true,
   "type": "module",
   "bin": {
-    "anki-server": "build/index.js"
+    "anki-mcp-server": "build/index.js"
   },
   "files": [
     "build"

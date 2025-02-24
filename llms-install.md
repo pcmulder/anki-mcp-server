@@ -1,6 +1,6 @@
-# Installing anki-server with LLMs
+# Installing anki-mcp-server with LLMs
 
-This guide provides step-by-step instructions for installing and configuring the anki-server MCP server using Large Language Models (LLMs).
+This guide provides step-by-step instructions for installing and configuring the anki-mcp-server MCP server using Large Language Models (LLMs).
 
 ## Prerequisites
 
@@ -15,8 +15,8 @@ This guide provides step-by-step instructions for installing and configuring the
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/anki-server.git
-cd anki-server
+git clone https://github.com/nailuoGG/anki-mcp-server.git
+cd anki-mcp-server
 ```
 
 2. Install dependencies:
@@ -40,7 +40,7 @@ Add to your Claude configuration file:
   "mcpServers": {
     "anki": {
       "command": "node",
-      "args": ["/absolute/path/to/anki-server/build/index.js"]
+      "args": ["/absolute/path/to/anki-mcp-server/build/index.js"]
     }
   }
 }
