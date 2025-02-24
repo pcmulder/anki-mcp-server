@@ -1,7 +1,48 @@
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
+import { MockAnkiConnect } from './mockAnkiConnect.js';
 
 export interface TestDeck {
     name: string;
+}
+
+// Track created test resources
+let testResources: {
+    decks: Set<string>;
+    noteIds: Set<number>;
+    noteTypes: Set<string>;
+} = {
+    decks: new Set(),
+    noteIds: new Set(),
+    noteTypes: new Set()
+};
+
+// Initialize test tracking
+export function initializeTestTracking() {
+    testResources = {
+        decks: new Set(),
+        noteIds: new Set(),
+        noteTypes: new Set()
+    };
+}
+
+// Clean up test resources
+export async function cleanupTestResources(ankiConnect: MockAnkiConnect) {
+    // Delete all test notes
+    if (testResources.noteIds.size > 0) {
+        await ankiConnect.deleteNotes({ notes: Array.from(testResources.noteIds) });
+    }
+
+    // Delete all test decks
+    for (const deck of testResources.decks) {
+        try {
+            await ankiConnect.deleteDeck(deck);
+        } catch (error) {
+            console.error(`Failed to delete deck ${deck}:`, error);
+        }
+    }
+
+    // Reset tracking
+    initializeTestTracking();
 }
 
 export interface TestBasicNote {
@@ -30,31 +71,36 @@ export interface TestNoteType {
 }
 
 export function createTestDeck(): TestDeck {
-    return {
-        name: `Test Deck ${Date.now()}`
+    const deck = {
+        name: `test_deck_${Date.now()}_${Math.random().toString(36).substring(7)}`
     };
+    testResources.decks.add(deck.name);
+    return deck;
 }
 
 export function createTestBasicNote(deckName: string): TestBasicNote {
+    const timestamp = Date.now();
     return {
         deck: deckName,
-        front: 'Test Front',
-        back: 'Test Back',
-        tags: ['test', 'basic']
+        front: `Test Front ${timestamp}`,
+        back: `Test Back ${timestamp}`,
+        tags: ['test', 'basic', `test_${timestamp}`]
     };
 }
 
 export function createTestClozeNote(deckName: string): TestClozeNote {
+    const timestamp = Date.now();
     return {
         deck: deckName,
-        text: 'This is a {{c1::cloze deletion}} test',
-        backExtra: 'Additional back content',
-        tags: ['test', 'cloze']
+        text: `This is a {{c1::cloze deletion}} test ${timestamp}`,
+        backExtra: `Additional back content ${timestamp}`,
+        tags: ['test', 'cloze', `test_${timestamp}`]
     };
 }
 
 export function createTestNoteType(): TestNoteType {
-    const name = `Test Note Type ${Date.now()}`;
+    const name = `test_note_type_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    testResources.noteTypes.add(name);
     return {
         name,
         fields: ['Question', 'Answer', 'Notes'],

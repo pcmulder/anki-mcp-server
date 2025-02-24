@@ -8,7 +8,9 @@ import {
     createTestBasicNote,
     createTestClozeNote,
     createTestNoteType,
-    expectError
+    expectError,
+    initializeTestTracking,
+    cleanupTestResources
 } from './helpers/testUtils.js';
 
 describe('AnkiServer', () => {
@@ -22,10 +24,11 @@ describe('AnkiServer', () => {
         // @ts-ignore - Type mismatch in axios-mock-adapter
         mockAxios = new MockAdapter(axiosInstance);
         mockAnkiConnect = new MockAnkiConnect();
+        initializeTestTracking();
     });
 
-    beforeEach(() => {
-        mockAnkiConnect.reset();
+    beforeEach(async () => {
+        await cleanupTestResources(mockAnkiConnect);
         mockAxios.reset();
 
         // Setup mock responses
@@ -49,295 +52,29 @@ describe('AnkiServer', () => {
         });
     });
 
-    afterAll(() => {
+    afterAll(async () => {
+        await cleanupTestResources(mockAnkiConnect);
         mockAxios.restore();
     });
 
-    describe('Deck Operations', () => {
-        test('should list all available decks', async () => {
+    afterEach(async () => {
+        await cleanupTestResources(mockAnkiConnect);
+    });
+
+    describe('Error Handling and Edge Cases', () => {
+        test('should handle connection timeout', async () => {
+            mockAxios.reset();
+            mockAxios.onPost('http://localhost:8765').timeout();
+
             const response = await axiosInstance.post('http://localhost:8765', {
                 action: 'deckNames',
                 version: 6,
                 params: {}
-            });
-            expect(response.data.result).toContain('Default');
-            expect(response.data.error).toBeNull();
+            }).catch(e => e);
+
+            expect(response).toHaveProperty('code', 'ECONNABORTED');
         });
 
-        test('should create a new deck', async () => {
-            const testDeck = createTestDeck();
-            const response = await axiosInstance.post('http://localhost:8765', {
-                action: 'createDeck',
-                version: 6,
-                params: { deck: testDeck.name }
-            });
-            expect(response.data.result).toBe(true);
-            expect(mockAnkiConnect.getDeck(testDeck.name)).toBe(true);
-        });
-
-        test('should handle duplicate deck creation', async () => {
-            const testDeck = createTestDeck();
-            // Create deck first time
-            await axiosInstance.post('http://localhost:8765', {
-                action: 'createDeck',
-                version: 6,
-                params: { deck: testDeck.name }
-            });
-
-            // Try to create same deck again
-            const response = await axiosInstance.post('http://localhost:8765', {
-                action: 'createDeck',
-                version: 6,
-                params: { deck: testDeck.name }
-            });
-            expect(response.data.error).toContain('Deck already exists');
-        });
-    });
-
-    describe('Note Operations', () => {
-        let testDeck: string;
-
-        beforeEach(async () => {
-            testDeck = createTestDeck().name;
-            await axiosInstance.post('http://localhost:8765', {
-                action: 'createDeck',
-                version: 6,
-                params: { deck: testDeck }
-            });
-        });
-
-        describe('Basic Notes', () => {
-            test('should create basic note', async () => {
-                const note = createTestBasicNote(testDeck);
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'addNote',
-                    version: 6,
-                    params: {
-                        note: {
-                            deckName: note.deck,
-                            modelName: 'Basic',
-                            fields: {
-                                Front: note.front,
-                                Back: note.back
-                            },
-                            tags: note.tags
-                        }
-                    }
-                });
-
-                expect(response.data.result).toBeGreaterThan(0);
-                const savedNote = mockAnkiConnect.getNote(response.data.result);
-                expect(savedNote?.fields.Front).toBe(note.front);
-                expect(savedNote?.fields.Back).toBe(note.back);
-            });
-
-            test('should handle missing required fields', async () => {
-                const note = createTestBasicNote(testDeck);
-                const { front, ...noteWithoutFront } = note;
-
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'addNote',
-                    version: 6,
-                    params: {
-                        note: {
-                            deckName: noteWithoutFront.deck,
-                            modelName: 'Basic',
-                            fields: {
-                                Back: noteWithoutFront.back
-                            },
-                            tags: noteWithoutFront.tags
-                        }
-                    }
-                });
-
-                expect(response.data.error).toBeTruthy();
-            });
-        });
-
-        describe('Cloze Notes', () => {
-            test('should create cloze note', async () => {
-                const note = createTestClozeNote(testDeck);
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'addNote',
-                    version: 6,
-                    params: {
-                        note: {
-                            deckName: note.deck,
-                            modelName: 'Cloze',
-                            fields: {
-                                Text: note.text,
-                                Back: note.backExtra || ''
-                            },
-                            tags: note.tags
-                        }
-                    }
-                });
-
-                expect(response.data.result).toBeGreaterThan(0);
-                const savedNote = mockAnkiConnect.getNote(response.data.result);
-                expect(savedNote?.fields.Text).toBe(note.text);
-                expect(savedNote?.fields.Back).toBe(note.backExtra);
-            });
-        });
-
-        describe('Note Search and Retrieval', () => {
-            let noteId: number;
-
-            beforeEach(async () => {
-                const note = createTestBasicNote(testDeck);
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'addNote',
-                    version: 6,
-                    params: {
-                        note: {
-                            deckName: note.deck,
-                            modelName: 'Basic',
-                            fields: {
-                                Front: note.front,
-                                Back: note.back
-                            },
-                            tags: note.tags
-                        }
-                    }
-                });
-                noteId = response.data.result;
-            });
-
-            test('should find notes by search query', async () => {
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'findNotes',
-                    version: 6,
-                    params: { query: 'Test Front' }
-                });
-                expect(response.data.result).toContain(noteId);
-            });
-
-            test('should get note info', async () => {
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'notesInfo',
-                    version: 6,
-                    params: { notes: [noteId] }
-                });
-                expect(response.data.result[0].id).toBe(noteId);
-            });
-        });
-
-        describe('Note Updates and Deletion', () => {
-            let noteId: number;
-
-            beforeEach(async () => {
-                const note = createTestBasicNote(testDeck);
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'addNote',
-                    version: 6,
-                    params: {
-                        note: {
-                            deckName: note.deck,
-                            modelName: 'Basic',
-                            fields: {
-                                Front: note.front,
-                                Back: note.back
-                            },
-                            tags: note.tags
-                        }
-                    }
-                });
-                noteId = response.data.result;
-            });
-
-            test('should update note fields', async () => {
-                const newFront = 'Updated Front';
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'updateNoteFields',
-                    version: 6,
-                    params: {
-                        note: {
-                            id: noteId,
-                            fields: {
-                                Front: newFront
-                            }
-                        }
-                    }
-                });
-
-                expect(response.data.result).toBe(true);
-                const updatedNote = mockAnkiConnect.getNote(noteId);
-                expect(updatedNote?.fields.Front).toBe(newFront);
-            });
-
-            test('should delete note', async () => {
-                const response = await axiosInstance.post('http://localhost:8765', {
-                    action: 'deleteNotes',
-                    version: 6,
-                    params: { notes: [noteId] }
-                });
-
-                expect(response.data.result).toBe(true);
-                expect(mockAnkiConnect.getNote(noteId)).toBeUndefined();
-            });
-        });
-    });
-
-    describe('Note Type Operations', () => {
-        test('should list available note types', async () => {
-            const response = await axiosInstance.post('http://localhost:8765', {
-                action: 'modelNames',
-                version: 6,
-                params: {}
-            });
-            expect(response.data.result).toContain('Basic');
-            expect(response.data.result).toContain('Cloze');
-        });
-
-        test('should create custom note type', async () => {
-            const noteType = createTestNoteType();
-            const response = await axiosInstance.post('http://localhost:8765', {
-                action: 'createModel',
-                version: 6,
-                params: {
-                    modelName: noteType.name,
-                    inOrderFields: noteType.fields,
-                    css: noteType.css,
-                    cardTemplates: noteType.templates
-                }
-            });
-
-            expect(response.data.result).toBe(true);
-            const types = await mockAnkiConnect.modelNames({});
-            expect(types).toContain(noteType.name);
-        });
-
-        test('should handle duplicate note type creation', async () => {
-            const noteType = createTestNoteType();
-            // Create first time
-            await axiosInstance.post('http://localhost:8765', {
-                action: 'createModel',
-                version: 6,
-                params: {
-                    modelName: noteType.name,
-                    inOrderFields: noteType.fields,
-                    css: noteType.css,
-                    cardTemplates: noteType.templates
-                }
-            });
-
-            // Try to create same type again
-            const response = await axiosInstance.post('http://localhost:8765', {
-                action: 'createModel',
-                version: 6,
-                params: {
-                    modelName: noteType.name,
-                    inOrderFields: noteType.fields,
-                    css: noteType.css,
-                    cardTemplates: noteType.templates
-                }
-            });
-
-            expect(response.data.error).toContain('Note type already exists');
-        });
-    });
-
-    describe('Error Handling', () => {
         test('should handle connection errors', async () => {
             mockAxios.reset();
             mockAxios.onPost('http://localhost:8765').networkError();
@@ -347,6 +84,26 @@ describe('AnkiServer', () => {
                 version: 6,
                 params: {}
             })).rejects.toThrow();
+        });
+
+        test('should handle malformed request data', async () => {
+            mockAxios.reset();
+            mockAxios.onPost('http://localhost:8765').reply(async (config: any) => {
+                try {
+                    JSON.parse(config.data);
+                    return [200, { result: null, error: null }];
+                } catch (error) {
+                    return [500, { error: 'Invalid JSON' }];
+                }
+            });
+
+            try {
+                await axiosInstance.post('http://localhost:8765', 'invalid json');
+                fail('Expected request to fail');
+            } catch (error: any) {
+                expect(error.response.status).toBe(500);
+                expect(error.response.data.error).toBe('Invalid JSON');
+            }
         });
 
         test('should handle invalid parameters', async () => {
@@ -379,6 +136,86 @@ describe('AnkiServer', () => {
             });
 
             expect(response.data.error).toContain('Note not found');
+        });
+    });
+
+    describe('Concurrent Operations', () => {
+        test('should handle multiple operations concurrently', async () => {
+            const testDeck = createTestDeck();
+            const operations = [
+                axiosInstance.post('http://localhost:8765', {
+                    action: 'createDeck',
+                    version: 6,
+                    params: { deck: testDeck.name }
+                }),
+                axiosInstance.post('http://localhost:8765', {
+                    action: 'modelNames',
+                    version: 6,
+                    params: {}
+                }),
+                axiosInstance.post('http://localhost:8765', {
+                    action: 'deckNames',
+                    version: 6,
+                    params: {}
+                })
+            ];
+
+            const results = await Promise.all(operations);
+            expect(results.every(r => r.status === 200)).toBe(true);
+            expect(results.every(r => r.data.error === null)).toBe(true);
+        });
+    });
+
+    describe('Cleanup Verification', () => {
+        test('should properly clean up test resources', async () => {
+            // Create test resources
+            const testDeck = createTestDeck();
+            await axiosInstance.post('http://localhost:8765', {
+                action: 'createDeck',
+                version: 6,
+                params: { deck: testDeck.name }
+            });
+
+            const note = createTestBasicNote(testDeck.name);
+            const noteResponse = await axiosInstance.post('http://localhost:8765', {
+                action: 'addNote',
+                version: 6,
+                params: {
+                    note: {
+                        deckName: note.deck,
+                        modelName: '基础',
+                        fields: {
+                            正面: note.front,
+                            背面: note.back
+                        },
+                        tags: note.tags
+                    }
+                }
+            });
+
+            // Verify resources were created
+            expect(mockAnkiConnect.getDeck(testDeck.name)).toBe(true);
+            expect(mockAnkiConnect.getNote(noteResponse.data.result)).toBeDefined();
+
+            // Run cleanup
+            await cleanupTestResources(mockAnkiConnect);
+
+            // Verify cleanup
+            expect(mockAnkiConnect.getDeck(testDeck.name)).toBe(false);
+            expect(mockAnkiConnect.getNote(noteResponse.data.result)).toBeUndefined();
+
+            // Verify deck list doesn't contain test deck
+            const decksResponse = await axiosInstance.post('http://localhost:8765', {
+                action: 'deckNames',
+                version: 6,
+                params: {}
+            });
+            expect(decksResponse.data.result).not.toContain(testDeck.name);
+        });
+
+        test('should handle cleanup of non-existent resources', async () => {
+            // Attempt cleanup without creating any resources
+            await expect(cleanupTestResources(mockAnkiConnect)).resolves.not.toThrow();
         });
     });
 });

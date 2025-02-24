@@ -15,12 +15,14 @@ export class MockAnkiConnect {
     private notes: Map<number, AnkiNote>;
     private noteTypes: Set<string>;
     private nextNoteId: number;
+    private testDecks: Set<string>; // Track test decks for cleanup
 
     constructor() {
         this.decks = new Set(['Default']);
         this.notes = new Map();
-        this.noteTypes = new Set(['Basic', 'Cloze']);
+        this.noteTypes = new Set(['Basic', 'Cloze', '基础', '填空题']);
         this.nextNoteId = 1;
+        this.testDecks = new Set();
     }
 
     private validateNoteFields(note: any) {
@@ -49,9 +51,13 @@ export class MockAnkiConnect {
             }
         }
 
-        if (note.modelName === 'Cloze') {
-            if (!note.fields.Text) {
+        if (note.modelName === 'Cloze' || note.modelName === '填空题') {
+            const textField = note.fields.Text || note.fields.文字;
+            if (!textField) {
                 throw new McpError(ErrorCode.InvalidParams, 'Text field is required for Cloze notes');
+            }
+            if (!textField.includes('{{c') || !textField.includes('}}')) {
+                throw new McpError(ErrorCode.InvalidParams, 'Invalid cloze note: missing cloze deletion format {{c1::...}}');
             }
         }
     }
@@ -92,6 +98,26 @@ export class MockAnkiConnect {
             deckName: note.deckName
         });
         return noteId;
+    };
+
+    addNotes: AnkiHandler = async ({ notes }: { notes: any[] }) => {
+        if (!Array.isArray(notes)) {
+            throw new McpError(ErrorCode.InvalidParams, 'Notes parameter must be an array');
+        }
+
+        const results = [];
+        for (const note of notes) {
+            try {
+                const noteId = await this.addNote({ note });
+                results.push(noteId);
+            } catch (error) {
+                if (error instanceof McpError) {
+                    throw error;
+                }
+                throw new McpError(ErrorCode.InternalError, 'Failed to add note');
+            }
+        }
+        return results;
     };
 
     findNotes: AnkiHandler = async ({ query }: { query: string }) => {
@@ -188,9 +214,18 @@ export class MockAnkiConnect {
 
     // Helper methods for testing
     reset() {
+        // Clear all test decks and their notes
+        this.testDecks.forEach(deck => {
+            Array.from(this.notes.values())
+                .filter(note => note.deckName === deck)
+                .forEach(note => this.notes.delete(note.id));
+            this.decks.delete(deck);
+        });
+        this.testDecks.clear();
+
+        // Reset to initial state
         this.decks = new Set(['Default']);
-        this.notes.clear();
-        this.noteTypes = new Set(['Basic', 'Cloze']);
+        this.noteTypes = new Set(['Basic', 'Cloze', '基础', '填空题']);
         this.nextNoteId = 1;
     }
 
@@ -205,5 +240,34 @@ export class MockAnkiConnect {
             ...note,
             tags: [...note.tags]
         };
+    }
+
+    // Track test decks for cleanup
+    markTestDeck(name: string) {
+        this.testDecks.add(name);
+    }
+
+    // Delete a specific deck and its notes
+    deleteDeck(name: string) {
+        if (!this.decks.has(name)) {
+            throw new McpError(ErrorCode.InvalidParams, `Deck not found: ${name}`);
+        }
+
+        // Delete all notes in the deck
+        Array.from(this.notes.values())
+            .filter(note => note.deckName === name)
+            .forEach(note => this.notes.delete(note.id));
+
+        // Remove the deck
+        this.decks.delete(name);
+        this.testDecks.delete(name);
+        return true;
+    }
+
+    // Get all notes in a deck
+    getDeckNotes(deckName: string): number[] {
+        return Array.from(this.notes.values())
+            .filter(note => note.deckName === deckName)
+            .map(note => note.id);
     }
 }

@@ -25,6 +25,7 @@ interface CreateNoteArgs {
   back?: string;
   text?: string;
   backExtra?: string;
+  fields?: Record<string, string>;
   tags?: string[];
 }
 
@@ -36,6 +37,7 @@ interface BatchCreateNotesArgs {
     back?: string;
     text?: string;
     backExtra?: string;
+    fields?: Record<string, string>;
     tags?: string[];
   }[];
   stopOnError?: boolean;
@@ -326,6 +328,11 @@ class AnkiServer {
                 type: 'string',
                 description: 'Additional back content (for Cloze notes)',
               },
+              fields: {
+                type: 'object',
+                description: 'Custom fields for the note',
+                additionalProperties: true
+              },
               tags: {
                 type: 'array',
                 items: {
@@ -366,6 +373,10 @@ class AnkiServer {
                     },
                     backExtra: {
                       type: 'string',
+                    },
+                    fields: {
+                      type: 'object',
+                      additionalProperties: true
                     },
                     tags: {
                       type: 'array',
@@ -539,35 +550,51 @@ class AnkiServer {
 
         case 'create_note': {
           const args = validateArgs<CreateNoteArgs>(request.params.arguments, ['type', 'deck']);
-          const { type, deck, front, back, text, backExtra, tags } = args;
+          const { type, deck, front, back, text, backExtra, fields, tags } = args;
           let note;
 
           if (type === 'Basic') {
-            if (!front || !back) {
+            if (fields) {
+              note = {
+                deckName: deck,
+                modelName: '基础',
+                fields,
+                tags: tags || [],
+              };
+            } else if (front && back) {
+              note = {
+                deckName: deck,
+                modelName: '基础',
+                fields: {
+                  正面: front,
+                  背面: back,
+                },
+                tags: tags || [],
+              };
+            } else {
               throw new McpError(ErrorCode.InvalidParams, 'Basic notes require front and back content');
             }
-            note = {
-              deckName: deck,
-              modelName: 'Basic',
-              fields: {
-                Front: front,
-                Back: back,
-              },
-              tags: tags || [],
-            };
           } else if (type === 'Cloze') {
-            if (!text) {
+            if (fields) {
+              note = {
+                deckName: deck,
+                modelName: '填空题',
+                fields,
+                tags: tags || [],
+              };
+            } else if (text) {
+              note = {
+                deckName: deck,
+                modelName: '填空题',
+                fields: {
+                  正面: text,
+                  背面: backExtra || '',
+                },
+                tags: tags || [],
+              };
+            } else {
               throw new McpError(ErrorCode.InvalidParams, 'Cloze notes require text content');
             }
-            note = {
-              deckName: deck,
-              modelName: 'Cloze',
-              fields: {
-                Text: text,
-                Back: backExtra || '',
-              },
-              tags: tags || [],
-            };
           } else {
             throw new McpError(ErrorCode.InvalidParams, 'Invalid note type');
           }
@@ -592,10 +619,10 @@ class AnkiServer {
             try {
               const note = {
                 deckName: noteData.deck,
-                modelName: noteData.type,
-                fields: noteData.type === 'Basic'
-                  ? { Front: noteData.front, Back: noteData.back }
-                  : { Text: noteData.text, Back: noteData.backExtra || '' },
+                modelName: noteData.type === 'Basic' ? '基础' : '填空题',
+                fields: noteData.fields || (noteData.type === 'Basic'
+                  ? { 正面: noteData.front, 背面: noteData.back }
+                  : { 正面: noteData.text, 背面: noteData.backExtra || '' }),
                 tags: noteData.tags || [],
               };
 
