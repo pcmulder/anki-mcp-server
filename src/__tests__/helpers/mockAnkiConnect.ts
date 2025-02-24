@@ -1,4 +1,5 @@
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { testConfig } from '../../config.js';
 
 interface AnkiNote {
     id: number;
@@ -18,9 +19,14 @@ export class MockAnkiConnect {
     private testDecks: Set<string>; // Track test decks for cleanup
 
     constructor() {
-        this.decks = new Set(['Default']);
+        this.decks = new Set([testConfig.defaultDeck]);
         this.notes = new Map();
-        this.noteTypes = new Set(['Basic', 'Cloze', '基础', '填空题']);
+        this.noteTypes = new Set([
+            testConfig.noteModels.basic.en,
+            testConfig.noteModels.basic.zh,
+            testConfig.noteModels.cloze.en,
+            testConfig.noteModels.cloze.zh
+        ]);
         this.nextNoteId = 1;
         this.testDecks = new Set();
     }
@@ -42,7 +48,7 @@ export class MockAnkiConnect {
             throw new McpError(ErrorCode.InvalidParams, 'Fields are required');
         }
 
-        if (note.modelName === 'Basic') {
+        if (note.modelName === testConfig.noteModels.basic.en) {
             if (!note.fields.Front) {
                 throw new McpError(ErrorCode.InvalidParams, 'Front field is required for Basic notes');
             }
@@ -51,7 +57,7 @@ export class MockAnkiConnect {
             }
         }
 
-        if (note.modelName === 'Cloze' || note.modelName === '填空题') {
+        if (note.modelName === testConfig.noteModels.cloze.en || note.modelName === testConfig.noteModels.cloze.zh) {
             const textField = note.fields.Text || note.fields.文字;
             if (!textField) {
                 throw new McpError(ErrorCode.InvalidParams, 'Text field is required for Cloze notes');
@@ -224,8 +230,13 @@ export class MockAnkiConnect {
         this.testDecks.clear();
 
         // Reset to initial state
-        this.decks = new Set(['Default']);
-        this.noteTypes = new Set(['Basic', 'Cloze', '基础', '填空题']);
+        this.decks = new Set([testConfig.defaultDeck]);
+        this.noteTypes = new Set([
+            testConfig.noteModels.basic.en,
+            testConfig.noteModels.basic.zh,
+            testConfig.noteModels.cloze.en,
+            testConfig.noteModels.cloze.zh
+        ]);
         this.nextNoteId = 1;
     }
 

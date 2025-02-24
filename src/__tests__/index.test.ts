@@ -3,6 +3,7 @@ import axios, { AxiosStatic } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { MockAnkiConnect } from './helpers/mockAnkiConnect.js';
+import { testConfig } from '../config.js';
 import {
     createTestDeck,
     createTestBasicNote,
@@ -32,7 +33,7 @@ describe('AnkiServer', () => {
         mockAxios.reset();
 
         // Setup mock responses
-        mockAxios.onPost('http://localhost:8765').reply(async (config) => {
+        mockAxios.onPost(testConfig.ankiConnectUrl).reply(async (config) => {
             try {
                 const request = JSON.parse(config.data);
                 const method = request.action as keyof MockAnkiConnect;
@@ -64,11 +65,11 @@ describe('AnkiServer', () => {
     describe('Error Handling and Edge Cases', () => {
         test('should handle connection timeout', async () => {
             mockAxios.reset();
-            mockAxios.onPost('http://localhost:8765').timeout();
+            mockAxios.onPost(testConfig.ankiConnectUrl).timeout();
 
-            const response = await axiosInstance.post('http://localhost:8765', {
+            const response = await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'deckNames',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {}
             }).catch(e => e);
 
@@ -77,18 +78,18 @@ describe('AnkiServer', () => {
 
         test('should handle connection errors', async () => {
             mockAxios.reset();
-            mockAxios.onPost('http://localhost:8765').networkError();
+            mockAxios.onPost(testConfig.ankiConnectUrl).networkError();
 
-            await expect(axiosInstance.post('http://localhost:8765', {
+            await expect(axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'deckNames',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {}
             })).rejects.toThrow();
         });
 
         test('should handle malformed request data', async () => {
             mockAxios.reset();
-            mockAxios.onPost('http://localhost:8765').reply(async (config: any) => {
+            mockAxios.onPost(testConfig.ankiConnectUrl).reply(async (config: any) => {
                 try {
                     JSON.parse(config.data);
                     return [200, { result: null, error: null }];
@@ -98,7 +99,7 @@ describe('AnkiServer', () => {
             });
 
             try {
-                await axiosInstance.post('http://localhost:8765', 'invalid json');
+                await axiosInstance.post(testConfig.ankiConnectUrl, 'invalid json');
                 fail('Expected request to fail');
             } catch (error: any) {
                 expect(error.response.status).toBe(500);
@@ -107,9 +108,9 @@ describe('AnkiServer', () => {
         });
 
         test('should handle invalid parameters', async () => {
-            const response = await axiosInstance.post('http://localhost:8765', {
+            const response = await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'addNote',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {
                     note: {
                         // Missing required fields
@@ -122,9 +123,9 @@ describe('AnkiServer', () => {
         });
 
         test('should handle non-existent note updates', async () => {
-            const response = await axiosInstance.post('http://localhost:8765', {
+            const response = await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'updateNoteFields',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {
                     note: {
                         id: 99999,
@@ -143,19 +144,19 @@ describe('AnkiServer', () => {
         test('should handle multiple operations concurrently', async () => {
             const testDeck = createTestDeck();
             const operations = [
-                axiosInstance.post('http://localhost:8765', {
+                axiosInstance.post(testConfig.ankiConnectUrl, {
                     action: 'createDeck',
-                    version: 6,
+                    version: testConfig.apiVersion,
                     params: { deck: testDeck.name }
                 }),
-                axiosInstance.post('http://localhost:8765', {
+                axiosInstance.post(testConfig.ankiConnectUrl, {
                     action: 'modelNames',
-                    version: 6,
+                    version: testConfig.apiVersion,
                     params: {}
                 }),
-                axiosInstance.post('http://localhost:8765', {
+                axiosInstance.post(testConfig.ankiConnectUrl, {
                     action: 'deckNames',
-                    version: 6,
+                    version: testConfig.apiVersion,
                     params: {}
                 })
             ];
@@ -170,20 +171,20 @@ describe('AnkiServer', () => {
         test('should properly clean up test resources', async () => {
             // Create test resources
             const testDeck = createTestDeck();
-            await axiosInstance.post('http://localhost:8765', {
+            await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'createDeck',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: { deck: testDeck.name }
             });
 
             const note = createTestBasicNote(testDeck.name);
-            const noteResponse = await axiosInstance.post('http://localhost:8765', {
+            const noteResponse = await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'addNote',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {
                     note: {
                         deckName: note.deck,
-                        modelName: '基础',
+                        modelName: testConfig.noteModels.basic.zh,
                         fields: {
                             正面: note.front,
                             背面: note.back
@@ -205,9 +206,9 @@ describe('AnkiServer', () => {
             expect(mockAnkiConnect.getNote(noteResponse.data.result)).toBeUndefined();
 
             // Verify deck list doesn't contain test deck
-            const decksResponse = await axiosInstance.post('http://localhost:8765', {
+            const decksResponse = await axiosInstance.post(testConfig.ankiConnectUrl, {
                 action: 'deckNames',
-                version: 6,
+                version: testConfig.apiVersion,
                 params: {}
             });
             expect(decksResponse.data.result).not.toContain(testDeck.name);

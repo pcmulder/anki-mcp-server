@@ -8,6 +8,7 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import axios from 'axios';
+import { config } from './config.js';
 
 // Tool argument types
 interface ListDecksArgs {
@@ -139,7 +140,7 @@ function validateArgs<T>(args: Record<string, unknown> | undefined, requiredFiel
 
 class AnkiServer {
   private server: Server;
-  private readonly ankiConnectUrl: string = 'http://localhost:8765';
+  private readonly ankiConnectUrl: string = config.ankiConnectUrl;
 
   constructor() {
     this.server = new Server(
@@ -169,18 +170,14 @@ class AnkiServer {
     try {
       const requestData = {
         action,
-        version: 6,
+        version: config.apiVersion,
         params,
       };
       console.error('[Anki] Request data:', JSON.stringify(requestData, null, 2));
 
       const response = await axios.post<AnkiResponse>(this.ankiConnectUrl, requestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Connection': 'keep-alive'
-        },
-        timeout: 5000,
+        headers: config.request.headers,
+        timeout: config.request.timeout,
         validateStatus: null,
         maxRedirects: 0,
         httpAgent: new (await import('http')).Agent({
@@ -221,7 +218,7 @@ class AnkiServer {
             // Recreate the request data
             const retryRequestData = {
               action,
-              version: 6,
+              version: config.apiVersion,
               params
             };
             const retryResponse = await axios.post<AnkiResponse>(this.ankiConnectUrl, retryRequestData, {
@@ -230,7 +227,7 @@ class AnkiServer {
                 'Accept': 'application/json',
                 'Connection': 'keep-alive'
               },
-              timeout: 10000, // Longer timeout for retry
+              timeout: config.request.retryTimeout,
               validateStatus: null,
               maxRedirects: 0,
               httpAgent: new (await import('http')).Agent({
@@ -557,14 +554,14 @@ class AnkiServer {
             if (fields) {
               note = {
                 deckName: deck,
-                modelName: '基础',
+                modelName: config.noteModels.basic.zh,
                 fields,
                 tags: tags || [],
               };
             } else if (front && back) {
               note = {
                 deckName: deck,
-                modelName: '基础',
+                modelName: config.noteModels.basic.zh,
                 fields: {
                   正面: front,
                   背面: back,
@@ -578,14 +575,14 @@ class AnkiServer {
             if (fields) {
               note = {
                 deckName: deck,
-                modelName: '填空题',
+                modelName: config.noteModels.cloze.zh,
                 fields,
                 tags: tags || [],
               };
             } else if (text) {
               note = {
                 deckName: deck,
-                modelName: '填空题',
+                modelName: config.noteModels.cloze.zh,
                 fields: {
                   正面: text,
                   背面: backExtra || '',
@@ -619,7 +616,7 @@ class AnkiServer {
             try {
               const note = {
                 deckName: noteData.deck,
-                modelName: noteData.type === 'Basic' ? '基础' : '填空题',
+                modelName: noteData.type === 'Basic' ? config.noteModels.basic.zh : config.noteModels.cloze.zh,
                 fields: noteData.fields || (noteData.type === 'Basic'
                   ? { 正面: noteData.front, 背面: noteData.back }
                   : { 正面: noteData.text, 背面: noteData.backExtra || '' }),

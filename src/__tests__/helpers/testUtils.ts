@@ -1,5 +1,6 @@
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { MockAnkiConnect } from './mockAnkiConnect.js';
+import { testConfig } from '../../config.js';
 
 export interface TestDeck {
     name: string;
@@ -80,21 +81,23 @@ export function createTestDeck(): TestDeck {
 
 export function createTestBasicNote(deckName: string): TestBasicNote {
     const timestamp = Date.now();
+    const [basic, test] = testConfig.test.tags.basic.split(',');
     return {
         deck: deckName,
         front: `Test Front ${timestamp}`,
         back: `Test Back ${timestamp}`,
-        tags: ['test', 'basic', `test_${timestamp}`]
+        tags: [test, basic, `test_${timestamp}`]
     };
 }
 
 export function createTestClozeNote(deckName: string): TestClozeNote {
     const timestamp = Date.now();
+    const [cloze, test] = testConfig.test.tags.cloze.split(',');
     return {
         deck: deckName,
         text: `This is a {{c1::cloze deletion}} test ${timestamp}`,
         backExtra: `Additional back content ${timestamp}`,
-        tags: ['test', 'cloze', `test_${timestamp}`]
+        tags: [test, cloze, `test_${timestamp}`]
     };
 }
 
@@ -103,15 +106,9 @@ export function createTestNoteType(): TestNoteType {
     testResources.noteTypes.add(name);
     return {
         name,
-        fields: ['Question', 'Answer', 'Notes'],
-        css: '.card { font-family: arial; }',
-        templates: [
-            {
-                name: 'Card 1',
-                front: '{{Question}}',
-                back: '{{FrontSide}}<hr id="answer">{{Answer}}<br><br>{{Notes}}'
-            }
-        ]
+        fields: [...testConfig.test.fields.basic],
+        css: testConfig.test.defaultCss,
+        templates: [testConfig.test.templates.basic]
     };
 }
 
