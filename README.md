@@ -2,6 +2,9 @@
 
 A Model Context Protocol (MCP) server that enables LLMs to interact with Anki flashcard software through AnkiConnect.
 
+
+![Anki Icon](./assets/icon.png)
+
 ## Features
 
 ### Tools
@@ -96,6 +99,10 @@ Text: In JavaScript, {{c1::const}} declares a block-scoped variable that cannot 
 2. Create your feature branch
 3. Run tests: `npm test`
 4. Submit a pull request
+
+## Credits
+
+Icon courtesy of [macOS Icons](https://macosicons.com/#/?icon=mWDBpVXqbc)
 
 ## License
 
