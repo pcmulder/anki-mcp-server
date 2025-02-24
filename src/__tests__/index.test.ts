@@ -1,17 +1,13 @@
-import { jest } from '@jest/globals';
 import axios, { AxiosStatic } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { MockAnkiConnect } from './helpers/mockAnkiConnect.js';
 import { testConfig } from '../config.js';
 import {
-    createTestDeck,
+    cleanupTestResources,
     createTestBasicNote,
-    createTestClozeNote,
-    createTestNoteType,
-    expectError,
-    initializeTestTracking,
-    cleanupTestResources
+    createTestDeck,
+    initializeTestTracking
 } from './helpers/testUtils.js';
 
 describe('AnkiServer', () => {
