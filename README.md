@@ -19,6 +19,12 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 - `list_note_types` - List all available note types
 - `create_note_type` - Create a new note type
 
+### Language Support
+- Automatically detects the language of your Anki installation
+- Supports both English and Chinese Anki interfaces
+- Dynamically uses the appropriate field names based on detected language
+- Falls back to English if language detection fails
+
 ## Prerequisites
 
 1. [Anki](https://apps.ankiweb.net/) installed on your system
