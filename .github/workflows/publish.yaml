@@ -14,34 +14,29 @@ jobs:
     permissions:
       contents: read
       id-token: write # Required for npm provenance
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-      
+          node-version: "20.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build
         run: npm run build
-      
-      # Tests and version validation are already done in the release-test workflow
-      
-      - name: Generate SBOM
-        uses: advanced-security/npm-dependency-submission-action@v4
-      
+
       - name: Publish to NPM
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+
       - name: Upload npm logs
         if: always()
         uses: actions/upload-artifact@v4
