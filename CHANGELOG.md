@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions workflow for testing on pull requests
 - Release test workflow to ensure quality before publishing
 - Sequential workflow execution (test → publish)
+- Robust version validation supporting multiple tag formats
 - npm package configuration
 - Installation instructions for npm package
 

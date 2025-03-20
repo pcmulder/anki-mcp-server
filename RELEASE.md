@@ -36,7 +36,9 @@ Once the PR is merged:
 
 1. Go to the [Releases page](https://github.com/nailuoGG/anki-mcp-server/releases)
 2. Click "Draft a new release"
-3. Create a new tag matching the version in package.json (e.g., `v0.1.1`)
+3. Create a new tag matching the version in package.json
+   - You can use either format: `0.1.1` or `v0.1.1` (with or without the 'v' prefix)
+   - The workflow will automatically handle both formats
 4. Title the release with the version number
 5. Add release notes (can be copied from CHANGELOG.md)
 6. Click "Create release" (not "Publish release")
