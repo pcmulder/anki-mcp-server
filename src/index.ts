@@ -141,6 +141,7 @@ function validateArgs<T>(args: Record<string, unknown> | undefined, requiredFiel
 class AnkiServer {
   private server: Server;
   private readonly ankiConnectUrl: string = config.ankiConnectUrl;
+  private ankiLanguage: 'en' | 'zh' = 'en'; // Default to English
 
   constructor() {
     this.server = new Server(
@@ -257,14 +258,56 @@ class AnkiServer {
   private async checkAnkiConnection(): Promise<void> {
     try {
       await this.invokeAnki('version');
+      // Detect Anki language by checking model names
+      await this.detectAnkiLanguage();
     } catch (error) {
-      if (error instanceof McpError) {
-        throw error;
-      }
       throw new McpError(
         ErrorCode.InternalError,
-        'Failed to connect to Anki. Please ensure Anki is running and AnkiConnect plugin is enabled.'
+        'Failed to connect to Anki. Please make sure Anki is running and the AnkiConnect plugin is enabled.'
       );
+    }
+  }
+
+  private async detectAnkiLanguage(): Promise<void> {
+    try {
+      // Get list of model names
+      const modelNames: string[] = await this.invokeAnki('modelNames');
+      
+      // Check if English basic model exists
+      if (modelNames.includes(config.noteModels.basic.en)) {
+        this.ankiLanguage = 'en';
+        console.error('[Anki] Detected language: English');
+      } 
+      // Check if Chinese basic model exists
+      else if (modelNames.includes(config.noteModels.basic.zh)) {
+        this.ankiLanguage = 'zh';
+        console.error('[Anki] Detected language: Chinese');
+      } 
+      // Default to English if can't detect
+      else {
+        this.ankiLanguage = 'en';
+        console.error('[Anki] Could not detect language, defaulting to English');
+      }
+    } catch (error) {
+      // Default to English on error
+      this.ankiLanguage = 'en';
+      console.error('[Anki] Error detecting language, defaulting to English:', error);
+    }
+  }
+
+  private getModelName(type: 'Basic' | 'Cloze'): string {
+    return type === 'Basic' 
+      ? config.noteModels.basic[this.ankiLanguage] 
+      : config.noteModels.cloze[this.ankiLanguage];
+  }
+
+  private getFieldNames(type: 'Basic' | 'Cloze'): {front: string, back: string} {
+    if (this.ankiLanguage === 'en') {
+      return type === 'Basic' 
+        ? { front: 'Front', back: 'Back' } 
+        : { front: 'Text', back: 'Back Extra' };
+    } else {
+      return { front: '正面', back: '背面' };
     }
   }
 
@@ -549,22 +592,24 @@ class AnkiServer {
           const args = validateArgs<CreateNoteArgs>(request.params.arguments, ['type', 'deck']);
           const { type, deck, front, back, text, backExtra, fields, tags } = args;
           let note;
+          const modelName = this.getModelName(type);
+          const fieldNames = this.getFieldNames(type);
 
           if (type === 'Basic') {
             if (fields) {
               note = {
                 deckName: deck,
-                modelName: config.noteModels.basic.zh,
+                modelName,
                 fields,
                 tags: tags || [],
               };
             } else if (front && back) {
               note = {
                 deckName: deck,
-                modelName: config.noteModels.basic.zh,
+                modelName,
                 fields: {
-                  正面: front,
-                  背面: back,
+                  [fieldNames.front]: front,
+                  [fieldNames.back]: back,
                 },
                 tags: tags || [],
               };
@@ -575,17 +620,17 @@ class AnkiServer {
             if (fields) {
               note = {
                 deckName: deck,
-                modelName: config.noteModels.cloze.zh,
+                modelName,
                 fields,
                 tags: tags || [],
               };
             } else if (text) {
               note = {
                 deckName: deck,
-                modelName: config.noteModels.cloze.zh,
+                modelName,
                 fields: {
-                  正面: text,
-                  背面: backExtra || '',
+                  [fieldNames.front]: text,
+                  [fieldNames.back]: backExtra || '',
                 },
                 tags: tags || [],
               };
@@ -614,12 +659,15 @@ class AnkiServer {
 
           for (const noteData of notes) {
             try {
+              const modelName = this.getModelName(noteData.type);
+              const fieldNames = this.getFieldNames(noteData.type);
+              
               const note = {
                 deckName: noteData.deck,
-                modelName: noteData.type === 'Basic' ? config.noteModels.basic.zh : config.noteModels.cloze.zh,
+                modelName,
                 fields: noteData.fields || (noteData.type === 'Basic'
-                  ? { 正面: noteData.front, 背面: noteData.back }
-                  : { 正面: noteData.text, 背面: noteData.backExtra || '' }),
+                  ? { [fieldNames.front]: noteData.front, [fieldNames.back]: noteData.back }
+                  : { [fieldNames.front]: noteData.text, [fieldNames.back]: noteData.backExtra || '' }),
                 tags: noteData.tags || [],
               };
 

@@ -3,3 +3,4 @@ build/
 *.log
 .env*
 .idea/
+test-language.js
