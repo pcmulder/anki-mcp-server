@@ -1,8 +1,7 @@
 {
   "name": "anki-mcp-server",
   "version": "0.1.0",
-  "description": "A MCP Server That Manage Anki Card ",
-  "private": true,
+  "description": "A Model Context Protocol (MCP) server that enables LLMs to interact with Anki flashcard software through AnkiConnect",
   "type": "module",
   "bin": {
     "anki-mcp-server": "build/index.js"
@@ -31,8 +30,29 @@
     "ts-jest": "^29.1.2",
     "typescript": "^5.7.3"
   },
-  "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "main": "build/index.js",
+  "keywords": [
+    "anki",
+    "mcp",
+    "llm",
+    "flashcards",
+    "ankiconnect",
+    "model-context-protocol"
+  ],
+  "author": "nailuoGG",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nailuoGG/anki-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nailuoGG/anki-mcp-server/issues"
+  },
+  "homepage": "https://github.com/nailuoGG/anki-mcp-server#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
