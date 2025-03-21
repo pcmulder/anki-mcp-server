@@ -9,13 +9,13 @@ This guide provides step-by-step instructions for installing and configuring the
    - Open Anki
    - Go to Tools > Add-ons > Get Add-ons
    - Enter code: 2055492159
-   - Restart Anki
-
+   - Restart Anki 
+   
 ## Installation Steps
 
-### Option 1: Using npx (Recommended)
+### Usage with Claude Desktop
 
-1. Configure the MCP server:
+Add the server to your claude_desktop_config.json:
 
 Add to your Claude configuration file:
 - MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -26,50 +26,28 @@ Add to your Claude configuration file:
   "mcpServers": {
     "anki": {
       "command": "npx",
-      "args": ["anki-mcp-server"]
+      "args": ["--yes", "anki-mcp-server"]
     }
   }
 }
 ```
 
-### Option 2: From Source
+### Configuration for Cline
 
-1. Clone the repository:
-```bash
-git clone https://github.com/nailuoGG/anki-mcp-server.git
-cd anki-mcp-server
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Build the server:
-```bash
-npm run build
-```
-
-4. Configure the MCP server:
-
-Add to your Claude configuration file:
-- MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+Add the dall-e server to your Cline MCP settings file inside VSCode's settings `cline_mcp_settings.json`
 
 ```json
 {
   "mcpServers": {
     "anki": {
-      "command": "node",
-      "args": ["/absolute/path/to/anki-mcp-server/build/index.js"]
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server"]
     }
   }
 }
 ```
 
-5. Start Anki and ensure AnkiConnect is running
-   - Open Anki
-   - AnkiConnect should be enabled in Tools > Add-ons
+
 
 ## Verification
 
@@ -78,6 +56,7 @@ To verify the installation:
 1. Ensure Anki is running
 2. Start Claude
 3. Try creating a new note with the following prompt:
+
 ```
 Create an Anki card in the "Default" deck with:
 Front: What is the capital of France?

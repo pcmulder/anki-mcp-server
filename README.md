@@ -30,66 +30,33 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 1. [Anki](https://apps.ankiweb.net/) installed on your system
 2. [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on installed in Anki
 
-## Installation
-
-### Option 1: Using npx (Recommended)
-
-```bash
-# Run directly with npx (no installation required)
-npx anki-mcp-server
-```
-
-### Option 2: From npm
-
-```bash
-# Install globally
-npm install -g anki-mcp-server
-
-# Or install locally
-npm install anki-mcp-server
-```
-
-### Option 3: From Source
-
-For detailed installation instructions from source, see [llms-install.md](llms-install.md).
-
 ## Configuration
 
-Add to your Claude configuration file:
-- MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+### Usage with Claude Desktop
+
+Add the server to your claude_desktop_config.json:
 
 ```json
 {
   "mcpServers": {
     "anki": {
       "command": "npx",
-      "args": ["anki-mcp-server"]
+      "args": ["--yes","anki-mcp-server"]
     }
   }
 }
 ```
 
-If installed globally via npm, you can use the binary directly:
+### Configuration for Cline
+
+Add the dall-e server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
 
 ```json
 {
   "mcpServers": {
     "anki": {
-      "command": "anki-mcp-server"
-    }
-  }
-}
-```
-
-Or if installed locally via npm:
-
-```json
-{
-  "mcpServers": {
-    "anki": {
-      "command": "node",
-      "args": ["path/to/node_modules/anki-mcp-server/build/index.js"]
+      "command": "npx",
+      "args": ["--yes","anki-mcp-server"]
     }
   }
 }
