@@ -1,13 +1,13 @@
 # Release Process
 
-This document outlines the process for creating a new release of the anki-mcp-server package and publishing it to npm.
+This document outlines the process for creating new releases of the anki-mcp-server package and publishing them to npm.
 
 ## Prerequisites
 
 1. Ensure you have npm account with publish access to the package
 2. Ensure you have the NPM_TOKEN secret set up in the GitHub repository settings
 
-## Release Steps
+## Standard Release Process
 
 ### 1. Update Version
 
@@ -67,6 +67,55 @@ Check that the package is available on npm:
 ```bash
 npm view anki-mcp-server
 ```
+
+## Beta Release Process
+
+Beta releases allow for testing new features before they are included in a standard release.
+
+### 1. Create and Switch to Beta Branch
+
+```bash
+# Create a new beta branch from the main branch
+git checkout main
+git pull
+git checkout -b beta
+```
+
+### 2. Make Changes and Push
+
+Make your changes, commit them, and push to the beta branch:
+
+```bash
+git add .
+git commit -m "Your commit message"
+git push -u origin beta
+```
+
+### 3. Monitor the Beta Release Workflow
+
+The GitHub Actions workflow will automatically:
+
+1. Run tests on the beta branch
+2. Generate a beta version number (e.g., 0.1.2-beta.1)
+3. Publish to npm with the beta tag
+4. Create a git tag for the beta version
+
+You can monitor the progress in the [Actions tab](https://github.com/nailuoGG/anki-mcp-server/actions).
+
+### 4. Install and Test the Beta Version
+
+Users can install the beta version using:
+
+```bash
+npm install anki-mcp-server@beta
+```
+
+### 5. Merge to Main
+
+Once the beta version has been tested and is ready for a standard release:
+
+1. Create a pull request from the beta branch to main
+2. Follow the standard release process to create a new release
 
 ## Troubleshooting
 
