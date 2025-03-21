@@ -13,6 +13,27 @@ This guide provides step-by-step instructions for installing and configuring the
 
 ## Installation Steps
 
+### Option 1: Using npx (Recommended)
+
+1. Configure the MCP server:
+
+Add to your Claude configuration file:
+- MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "npx",
+      "args": ["anki-mcp-server"]
+    }
+  }
+}
+```
+
+### Option 2: From Source
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/nailuoGG/anki-mcp-server.git

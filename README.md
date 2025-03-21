@@ -32,7 +32,14 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 
 ## Installation
 
-### Option 1: From npm (Recommended)
+### Option 1: Using npx (Recommended)
+
+```bash
+# Run directly with npx (no installation required)
+npx anki-mcp-server
+```
+
+### Option 2: From npm
 
 ```bash
 # Install globally
@@ -42,7 +49,7 @@ npm install -g anki-mcp-server
 npm install anki-mcp-server
 ```
 
-### Option 2: From Source
+### Option 3: From Source
 
 For detailed installation instructions from source, see [llms-install.md](llms-install.md).
 
@@ -56,20 +63,33 @@ Add to your Claude configuration file:
 {
   "mcpServers": {
     "anki": {
-      "command": "node",
-      "args": ["path/to/node_modules/anki-mcp-server/build/index.js"]
+      "command": "npx",
+      "args": ["anki-mcp-server"]
     }
   }
 }
 ```
 
-If installed globally, you can use the binary directly:
+If installed globally via npm, you can use the binary directly:
 
 ```json
 {
   "mcpServers": {
     "anki": {
       "command": "anki-mcp-server"
+    }
+  }
+}
+```
+
+Or if installed locally via npm:
+
+```json
+{
+  "mcpServers": {
+    "anki": {
+      "command": "node",
+      "args": ["path/to/node_modules/anki-mcp-server/build/index.js"]
     }
   }
 }
