@@ -49,7 +49,7 @@ Add the server to your claude_desktop_config.json:
 
 ### Configuration for Cline
 
-Add the server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
+Add the server to your Cline MCP settings file inside VSCode's settings `cline_mcp_settings.json` 
 
 ```json
 {

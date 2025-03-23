@@ -1,16 +1,7 @@
 # Installing anki-mcp-server with LLMs
 
 This guide provides step-by-step instructions for installing and configuring the anki-mcp-server MCP server using Large Language Models (LLMs).
-
-## Prerequisites
-
-1. Install [Anki](https://apps.ankiweb.net/) on your system
-2. Install [AnkiConnect](https://ankiweb.net/shared/info/2055492159) add-on in Anki
-   - Open Anki
-   - Go to Tools > Add-ons > Get Add-ons
-   - Enter code: 2055492159
-   - Restart Anki 
-   
+  
 ## Installation Steps
 
 ### Usage with Claude Desktop
@@ -34,7 +25,7 @@ Add to your Claude configuration file:
 
 ### Configuration for Cline
 
-Add the dall-e server to your Cline MCP settings file inside VSCode's settings `cline_mcp_settings.json`
+Add the anki server to your `cline_mcp_settings.json`
 
 ```json
 {
