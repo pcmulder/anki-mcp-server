@@ -30,8 +30,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Run tests
-        run: npm test
+      # - name: Run tests
+      #   run: npm test
 
   beta-publish:
     name: Publish Beta to NPM

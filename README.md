@@ -2,7 +2,6 @@
 
 A Model Context Protocol (MCP) server that enables LLMs to interact with Anki flashcard software through AnkiConnect.
 
-
 ![Anki Icon](./assets/icon.png)
 
 ## Features
@@ -18,12 +17,13 @@ A Model Context Protocol (MCP) server that enables LLMs to interact with Anki fl
 - `delete_note` - Delete a note
 - `list_note_types` - List all available note types
 - `create_note_type` - Create a new note type
+- `get_note_type_info` - Get detailed structure of a note type
 
-### Language Support
-- Automatically detects the language of your Anki installation
-- Supports both English and Chinese Anki interfaces
-- Dynamically uses the appropriate field names based on detected language
-- Falls back to English if language detection fails
+### Resources
+- `anki://decks/all` - Complete list of available decks
+- `anki://note-types/all` - List of all available note types
+- `anki://note-types/all-with-schemas` - Detailed structure information for all note types
+- `anki://note-types/{modelName}` - Detailed structure information for a specific note type
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ Add the server to your claude_desktop_config.json:
 
 ### Configuration for Cline
 
-Add the dall-e server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
+Add the server to your Cline MCP settings file inside VSCode's settings (ex. ~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json):
 
 ```json
 {

@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2025-03-20
 
+
 ### Added
+
 - Initial release
 - MCP server implementation for Anki integration
 - Support for creating, reading, updating, and deleting notes
@@ -29,3 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for creating note types
 - Automatic language detection for Anki interface
 - Support for both English and Chinese Anki interfaces
+
+## [0.1.0] - 2025-03-23
+
+### Added
+
+- Add  `get_note_type_info` - Get detailed structure of a note type
+- Add Resources `anki://decks/all`, `anki://note-types/{modelName}` etc 
+- Support for detect card type fields before create card
+
+### Changed
+
+- Build base on  `yanki-connect` now 
