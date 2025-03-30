@@ -458,4 +458,24 @@ export class AnkiClient {
 			);
 		}
 	}
+
+	/**
+	 * Answer cards
+	 */
+	async answerCards(params: {
+		cardAnswers: {
+			cardId: number;
+			ease: number;
+		}[];
+	}): Promise<void> {
+		try {
+			await this.executeWithRetry(() =>
+				this.client.card.answerCards({ answers: params.cardAnswers }),
+			);
+		} catch (error) {
+			throw this.wrapError(
+				error instanceof Error ? error : new Error(String(error)),
+			);
+		}
+	}
 }

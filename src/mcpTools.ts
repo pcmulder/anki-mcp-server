@@ -255,6 +255,38 @@ export class McpToolHandler {
 						required: ["name", "fields", "templates"],
 					},
 				},
+				{
+					name: "answer_cards",
+					description: "Answer cards with Anki",
+					inputSchema: {
+						type: "object",
+						properties: {
+							cardAnswers: {
+								type: "array",
+								description:
+									"An array of card answers, each specifying the card ID and the ease rating.",
+								items: {
+									type: "object",
+									properties: {
+										cardId: {
+											type: "integer",
+											description: "The ID of the card being answered.",
+										},
+										ease: {
+											type: "integer",
+											description:
+												"The ease rating for the card answer. Must be between 1 (Again) and 4 (Easy).",
+											minimum: 1,
+											maximum: 4,
+										},
+									},
+									required: ["cardId", "ease"],
+								},
+							},
+							required: ["cardAnswers"],
+						},
+					},
+				},
 			],
 		};
 	}
@@ -303,6 +335,8 @@ export class McpToolHandler {
 					return this.updateNote(args);
 				case "delete_note":
 					return this.deleteNote(args);
+				case "answer_cards":
+					return this.answerCards(args);
 
 				// Dynamic model-specific note creation
 				default:
@@ -913,6 +947,37 @@ export class McpToolHandler {
 						{
 							success: true,
 							noteId: args.noteId,
+						},
+						null,
+						2,
+					),
+				},
+			],
+		};
+	}
+
+	/**
+	 * Answer a note
+	 */
+	private async answerCards(args: {
+		cardAnswers: {
+			cardId: number;
+			ease: number;
+		}[];
+	}): Promise<{
+		content: {
+			type: string;
+			text: string;
+		}[];
+	}> {
+		await this.ankiClient.answerCards(args);
+		return {
+			content: [
+				{
+					type: "text",
+					text: JSON.stringify(
+						{
+							success: true,
 						},
 						null,
 						2,
